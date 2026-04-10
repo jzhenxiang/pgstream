@@ -5,6 +5,9 @@
 // When a deny list is provided, any matching table is skipped regardless of
 // the allow list. Deny rules always take precedence.
 //
+// If neither an allow list nor a deny list is configured, all tables are
+// processed (i.e., the filter is a no-op).
+//
 // Table names are matched case-insensitively in "schema.table" format.
 //
 // Example usage:
