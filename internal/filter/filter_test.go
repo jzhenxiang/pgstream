@@ -75,3 +75,19 @@ func TestIsEmpty_WithRules(t *testing.T) {
 		t.Error("expected filter to not be empty")
 	}
 }
+
+func TestAllow_MultipleSchemas(t *testing.T) {
+	f := filter.New(filter.Config{
+		AllowTables: []string{"public.orders", "analytics.events"},
+	})
+
+	if !f.Allow("public", "orders") {
+		t.Error("expected public.orders to be allowed")
+	}
+	if !f.Allow("analytics", "events") {
+		t.Error("expected analytics.events to be allowed")
+	}
+	if f.Allow("analytics", "orders") {
+		t.Error("expected analytics.orders to be denied (not in allow list)")
+	}
+}
