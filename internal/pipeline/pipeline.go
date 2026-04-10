@@ -63,10 +63,14 @@ func New(cfg Config) (*Pipeline, error) {
 }
 
 // Run starts the pipeline and blocks until ctx is cancelled or a fatal error
-// occurs.
+// occurs. It logs the cause when the context is cancelled.
 func (p *Pipeline) Run(ctx context.Context) error {
 	p.logger.Info("pipeline starting")
 	if err := p.processor.Run(ctx); err != nil {
+		if ctx.Err() != nil {
+			p.logger.Info("pipeline stopped", "reason", ctx.Err())
+			return nil
+		}
 		return fmt.Errorf("pipeline: %w", err)
 	}
 	p.logger.Info("pipeline stopped")
