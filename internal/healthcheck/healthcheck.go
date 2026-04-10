@@ -60,9 +60,11 @@ func (s *Server) Start(ctx context.Context) error {
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(Status{
+	if err := json.NewEncoder(w).Encode(Status{
 		Status:    "ok",
 		Timestamp: time.Now().UTC(),
 		Version:   s.version,
-	})
+	}); err != nil {
+		http.Error(w, "failed to encode health status", http.StatusInternalServerError)
+	}
 }
