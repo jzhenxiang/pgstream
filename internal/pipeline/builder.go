@@ -1,54 +1,51 @@
 package pipeline
 
 import (
+	"errors"
 	"fmt"
-	"log/slog"
 
 	"github.com/pgstream/pgstream/internal/config"
-	"github.com/pgstream/pgstream/internal/filter"
-	"github.com/pgstream/pgstream/internal/metrics"
+	"github.com/pgstream/pgstream/internal/healthcheck"
 	"github.com/pgstream/pgstream/internal/sink"
-	"github.com/pgstream/pgstream/internal/transform"
+	"github.com/pgstream/pgstream/internal/sink/kafka"
+	"github.com/pgstream/pgstream/internal/sink/webhook"
 	"github.com/pgstream/pgstream/internal/wal"
 )
 
-// Build constructs a fully wired Pipeline from application config.
-func Build(cfg *config.Config, logger *slog.Logger) (*Pipeline, error) {
+// Build constructs a Pipeline from the provided configuration, wiring together
+// the WAL reader, decoder, sink, and optional health check server.
+func Build(cfg *config.Config) (*Pipeline, error) {
 	if cfg == nil {
-		return nil, fmt.Errorf("builder: config must not be nil")
+		return nil, errors.New("pipeline: config must not be nil")
 	}
-
-	reader, err := wal.NewReader(cfg.Postgres.DSN)
-	if err != nil {
-		return nil, fmt.Errorf("builder: wal reader: %w", err)
-	}
-
-	f := filter.New(cfg.Filter)
-	tr := transform.New(cfg.Transform)
-	m := metrics.New()
 
 	var s sink.Sink
 	switch {
-	case cfg.Kafka.Brokers != nil:
-		s, err = sink.NewKafkaSink(cfg.Kafka)
+	case cfg.Kafka.Brokers != "":
+		ks, err := kafka.NewKafkaSink(cfg.Kafka)
 		if err != nil {
-			return nil, fmt.Errorf("builder: kafka sink: %w", err)
+			return nil, fmt.Errorf("pipeline: kafka sink: %w", err)
 		}
+		s = ks
 	case cfg.Webhook.URL != "":
-		s, err = sink.NewWebhookSink(cfg.Webhook)
+		ws, err := webhook.NewWebhookSink(cfg.Webhook)
 		if err != nil {
-			return nil, fmt.Errorf("builder: webhook sink: %w", err)
+			return nil, fmt.Errorf("pipeline: webhook sink: %w", err)
 		}
+		s = ws
 	default:
-		return nil, fmt.Errorf("builder: no sink configured; set kafka or webhook options")
+		return nil, errors.New("pipeline: no sink configured (set kafka.brokers or webhook.url)")
 	}
 
-	return New(Config{
-		Reader:    reader,
-		Filter:    f,
-		Transform: tr,
-		Sink:      s,
-		Metrics:   m,
-		Logger:    logger,
-	})
+	reader, err := wal.NewReader(cfg.Postgres)
+	if err != nil {
+		return nil, fmt.Errorf("pipeline: wal reader: %w", err)
+	}
+
+	var hs *healthcheck.Server
+	if cfg.HealthCheck.Addr != "" {
+		hs = healthcheck.New(cfg.HealthCheck.Addr, cfg.Version)
+	}
+
+	return New(reader, s, hs)
 }
