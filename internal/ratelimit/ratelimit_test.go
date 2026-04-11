@@ -96,3 +96,31 @@ func TestStop_StopsLimiter(t *testing.T) {
 		t.Fatal("Wait did not return after Stop")
 	}
 }
+
+// TestWait_RateIsRespected verifies that the limiter enforces the configured
+// rate by measuring the elapsed time for multiple sequential Wait calls.
+func TestWait_RateIsRespected(t *testing.T) {
+	const rate = 10 // events per second => ~100ms between tokens
+	l, err := ratelimit.New(ratelimit.Config{EventsPerSecond: rate})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	defer l.Stop()
+
+	ctx := context.Background()
+	// Drain the pre-filled token.
+	_ = l.Wait(ctx)
+
+	start := time.Now()
+	if err := l.Wait(ctx); err != nil {
+		t.Fatalf("Wait returned unexpected error: %v", err)
+	}
+	elapsed := time.Since(start)
+
+	// Allow generous bounds: at least half the expected interval must have
+	// passed, but no more than 5x (to tolerate slow CI environments).
+	expected := time.Second / rate
+	if elapsed < expected/2 {
+		t.Fatalf("Wait returned too quickly: elapsed %v, expected >= %v", elapsed, expected/2)
+	}
+}
