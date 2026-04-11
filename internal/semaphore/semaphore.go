@@ -80,3 +80,11 @@ func (s *Semaphore) Current() int {
 func (s *Semaphore) Max() int {
 	return s.max
 }
+
+// Available returns the number of slots that can still be acquired
+// without blocking.
+func (s *Semaphore) Available() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.max - s.current
+}
