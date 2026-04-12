@@ -103,5 +103,17 @@ func (s *Snapshot) snapshotTable(ctx context.Context, table string, emit func(co
 			return fmt.Errorf("snapshot: emit %s: %w", table, err)
 		}
 	}
-	return rows.Err()
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("snapshot: rows %s: %w", table, err)
+	}
+	return nil
+}
+
+// Ping verifies the database connection is alive. It is useful for
+// health-checking the snapshot instance before starting a long-running Run.
+func (s *Snapshot) Ping(ctx context.Context) error {
+	if err := s.db.PingContext(ctx); err != nil {
+		return fmt.Errorf("snapshot: ping: %w", err)
+	}
+	return nil
 }
