@@ -1,17 +1,9 @@
-// Package router assembles the HTTP layer of pgstream.
+// Package router builds and wires the HTTP router used by pgstream's webhook
+// receiver. It exposes:
 //
-// It composes the health-check handler and optional middleware (request
-// logging, panic recovery, HMAC signature verification) into a single
-// http.Handler that can be passed directly to an http.Server.
-//
-// Usage:
-//
-//	h, err := router.New(router.Config{
-//		SigningSecret: os.Getenv("PGSTREAM_SIGNING_SECRET"),
-//		Logger:        logger,
-//	}, hc)
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	http.ListenAndServe(":8080", h)
+//   - New: constructs the mux with health-check and event routes.
+//   - Chain: composes middleware in left-to-right (outermost-first) order.
+//   - WithTimeout: attaches a per-request deadline to the context.
+//   - WithSigning: verifies HMAC-SHA256 request signatures produced by the
+//     middleware.Signer; a blank secret disables verification.
 package router
