@@ -61,6 +61,15 @@ func TestReset_ClearsCount(t *testing.T) {
 	}
 }
 
+func TestReset_ClearsBuckets(t *testing.T) {
+	w, _ := New(time.Minute, time.Second)
+	w.Add(5)
+	w.Reset()
+	if n := len(w.buckets); n != 0 {
+		t.Fatalf("expected 0 buckets after reset, got %d", n)
+	}
+}
+
 func TestEvict_RemovesOldBuckets(t *testing.T) {
 	// Use a very small window so we can inject old entries directly.
 	w, _ := New(100*time.Millisecond, 10*time.Millisecond)
