@@ -63,3 +63,25 @@ func TestNew_InvalidJSON(t *testing.T) {
 		t.Error("expected error for invalid JSON, got nil")
 	}
 }
+
+func TestSave_OverwritesPreviousValue(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "wal.json")
+	cp, _ := New(path)
+
+	if err := cp.Save("0/AABBCC"); err != nil {
+		t.Fatalf("first save failed: %v", err)
+	}
+	if err := cp.Save("0/112233"); err != nil {
+		t.Fatalf("second save failed: %v", err)
+	}
+
+	// Reload from disk to confirm the latest value was persisted.
+	cp2, err := New(path)
+	if err != nil {
+		t.Fatalf("unexpected error on reload: %v", err)
+	}
+	if cp2.Get() != "0/112233" {
+		t.Errorf("expected %q after overwrite, got %q", "0/112233", cp2.Get())
+	}
+}
