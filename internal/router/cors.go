@@ -52,6 +52,8 @@ func WithCORS(cfg *CORSConfig) func(http.Handler) http.Handler {
 				if cfg.MaxAge > 0 {
 					w.Header().Set("Access-Control-Max-Age", strconv.Itoa(cfg.MaxAge))
 				}
+				// Vary header ensures caches correctly store per-origin responses.
+				w.Header().Add("Vary", "Origin")
 			}
 			if r.Method == http.MethodOptions {
 				w.WriteHeader(http.StatusNoContent)
