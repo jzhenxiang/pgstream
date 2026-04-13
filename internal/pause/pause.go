@@ -69,3 +69,11 @@ func (c *Controller) Wait(ctx context.Context) error {
 		return ctx.Err()
 	}
 }
+
+// PauseAndWait transitions the controller into the paused state and then
+// blocks until Resume is called or ctx is done. This is a convenience
+// method combining Pause and Wait for callers that own both operations.
+func (c *Controller) PauseAndWait(ctx context.Context) error {
+	c.Pause()
+	return c.Wait(ctx)
+}
