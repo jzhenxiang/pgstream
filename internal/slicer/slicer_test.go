@@ -79,6 +79,16 @@ func TestAdd_NoFlushBelowMaxSize(t *testing.T) {
 	}
 }
 
+func TestAdd_FlushErrorPropagates(t *testing.T) {
+	expected := errors.New("add flush error")
+	s, _ := New(Config{MaxSize: 2}, func(_ []*wal.Event) error { return expected })
+	_ = s.Add(makeEvent("a"))
+	err := s.Add(makeEvent("b"))
+	if !errors.Is(err, expected) {
+		t.Errorf("expected %v, got %v", expected, err)
+	}
+}
+
 func TestFlush_EmptyBuffer_IsNoOp(t *testing.T) {
 	var called int32
 	s, _ := New(Config{}, func(_ []*wal.Event) error {
