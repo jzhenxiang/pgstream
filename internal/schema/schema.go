@@ -26,6 +26,17 @@ func (t *TableSchema) Key() string {
 	return fmt.Sprintf("%s.%s", t.Schema, t.Table)
 }
 
+// ColumnByName returns the Column with the given name and true if found,
+// or an empty Column and false if no column with that name exists.
+func (t *TableSchema) ColumnByName(name string) (Column, bool) {
+	for _, col := range t.Columns {
+		if col.Name == name {
+			return col, true
+		}
+	}
+	return Column{}, false
+}
+
 // Cache stores table schemas in memory and is safe for concurrent use.
 type Cache struct {
 	mu      sync.RWMutex
