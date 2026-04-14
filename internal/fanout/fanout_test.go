@@ -99,3 +99,24 @@ func TestSend_AllSinksFail_CombinesErrors(t *testing.T) {
 		t.Errorf("unexpected error format: %v", err)
 	}
 }
+
+func TestSend_CancelledContext_PropagatedToSinks(t *testing.T) {
+	var receivedCtx context.Context
+	s := &mockSink{sendFn: func(ctx context.Context, _ *wal.Event) error {
+		receivedCtx = ctx
+		return nil
+	}}
+	f, _ := New(s)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_ = f.Send(ctx, &wal.Event{})
+
+	if receivedCtx == nil {
+		t.Fatal("expected sink to receive context, got nil")
+	}
+	if receivedCtx.Err() == nil {
+		t.Error("expected cancelled context to be propagated to sink")
+	}
+}
