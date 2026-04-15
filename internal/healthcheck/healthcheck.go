@@ -65,6 +65,13 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 		Timestamp: time.Now().UTC(),
 		Version:   s.version,
 	}); err != nil {
+		// Note: WriteHeader has already been called, so we cannot change the
+		// status code at this point. Log the encoding failure instead.
 		http.Error(w, "failed to encode health status", http.StatusInternalServerError)
 	}
+}
+
+// Addr returns the configured listening address of the health check server.
+func (s *Server) Addr() string {
+	return s.server.Addr
 }
