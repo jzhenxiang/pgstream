@@ -72,6 +72,18 @@ func TestPipeline_Run_ContextCancelled(t *testing.T) {
 	}
 }
 
+// TestNew_NilReaderAndSink verifies that an error is returned when both reader
+// and sink are nil.
+func TestNew_NilReaderAndSink(t *testing.T) {
+	_, err := pipeline.New(pipeline.Config{
+		Reader: nil,
+		Sink:   nil,
+	})
+	if err == nil {
+		t.Fatal("expected error for nil reader and sink, got nil")
+	}
+}
+
 // stubSink satisfies sink.Sink for testing.
 type stubSink struct{}
 
