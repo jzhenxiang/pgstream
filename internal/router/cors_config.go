@@ -4,22 +4,23 @@ import "errors"
 
 // CORSConfig holds configuration for the CORS middleware.
 type CORSConfig struct {
-	// AllowedOrigins is the list of origins allowed to make cross-origin requests.
+	// AllowedOrigins is the list of origins that are allowed.
 	// Use "*" to allow all origins.
 	AllowedOrigins []string
 
-	// AllowedMethods is the list of HTTP methods permitted in CORS requests.
-	// Defaults to [GET, HEAD, POST] if empty.
+	// AllowedMethods is the list of HTTP methods that are allowed.
+	// Defaults to GET, POST, PUT, DELETE, OPTIONS if empty.
 	AllowedMethods []string
 
-	// AllowedHeaders is the list of request headers permitted in CORS requests.
+	// AllowedHeaders is the list of HTTP headers that are allowed.
 	AllowedHeaders []string
 
-	// AllowCredentials indicates whether the request can include user credentials.
+	// AllowCredentials indicates whether the request can include
+	// user credentials such as cookies or HTTP authentication.
 	AllowCredentials bool
 
-	// MaxAge is the value for the Access-Control-Max-Age header in seconds.
-	// Zero means the header is omitted.
+	// MaxAge indicates how long (in seconds) the results of a
+	// preflight request can be cached.
 	MaxAge int
 }
 
@@ -30,17 +31,17 @@ func (c *CORSConfig) Validate() error {
 	}
 	for _, o := range c.AllowedOrigins {
 		if o == "" {
-			return errors.New("cors: blank origin in AllowedOrigins")
+			return errors.New("cors: origin must not be blank")
 		}
 	}
 	for _, m := range c.AllowedMethods {
 		if m == "" {
-			return errors.New("cors: blank method in AllowedMethods")
+			return errors.New("cors: method must not be blank")
 		}
 	}
 	for _, h := range c.AllowedHeaders {
 		if h == "" {
-			return errors.New("cors: blank header in AllowedHeaders")
+			return errors.New("cors: header must not be blank")
 		}
 	}
 	return nil
